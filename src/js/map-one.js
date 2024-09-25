@@ -1,3 +1,4 @@
+// js Code voor maps wanneer je een maar 1 marker nodig hebt.
 import { Loader } from "@googlemaps/js-api-loader";
 
 const mapElement = document.querySelector('#map-contact'); // Id van de div waar je map in moet
@@ -13,20 +14,28 @@ if (mapElement) {
         const mapOptions = {
             center: {lat: lat, lng: lng},
             zoom: 12, // hoe hard de map moet inzoomen 
-            mapId: "7e1c4c732de8a407", // ID van de map management waar de juiste styling is aan toegevoegd 
+            mapId: "MAP_ID", // ID van de map management waar de juiste styling is aan toegevoegd 
             mapTypeControl: false,
             streetViewControl: false,
         };
     
         loader 
             .importLibrary('maps', 'marker')
+            .then(() => {
+                return loader.importLibrary('marker')
+            })
             .then (() => {
+                if (!google.maps.marker || !google.maps.marker.AdvancedMarkerElement) {
+                    console.error("AdvancedMarkerElement is not available.")
+                }
+
                 const { Map } = google.maps;
                 const { AdvancedMarkerElement } = google.maps.marker;
 
                 const map = new Map(document.getElementById("map-contact"), mapOptions);
 
                 const customMarker = document.createElement('div');
+                customMarker.className = "custom-marker";
                 customMarker.innerHTML = `<div class="map-marker"></div>`; // div van de marker die je customized  
                 const marker = new AdvancedMarkerElement({
                     position: {lat: lat , lng: lng},
@@ -43,16 +52,16 @@ if (mapElement) {
     async function fetchCoordinates() {
         // Query van je data 
         const query = `
-            {
-                globalSet(handle: "companyInfo") {
-                    ... on companyInfo_GlobalSet {
-                        f_address {
-                            latitude
-                            longitude
-                        }
+            query CompanyLocation {
+                entries(section: "contactInfo") {
+                    ... on contactInfo_Entry {
+                    f_address {
+                        latitude
+                        longitude
+                    }
                     }
                 }
-            }
+                }
         `;
     
         const response = await fetch('/api', {
